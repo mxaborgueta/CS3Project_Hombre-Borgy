@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>QuakePH</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- Leaflet CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  height:100%;
+  background:#0b0f19;
+  font-family:Segoe UI, Tahoma, sans-serif;
+  color:#e5e7eb;
+  overflow:hidden;
+}
+
+.app {
+  display:flex;
+  height:100%;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width:260px;
+  background:linear-gradient(180deg,#0b0f19,#111827);
+  border-right:1px solid #1f2933;
+  padding:16px;
+  transition:width .3s;
+  position:relative;
+}
+
+.sidebar.collapsed { width:70px; }
+
+.toggle {
+  position:absolute;
+  top:12px;
+  right:-15px;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:#1f2933;
+  border:1px solid #374151;
+  color:#93c5fd;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.logo {
+  text-align:center;
+  font-weight:700;
+  color:#93c5fd;
+  margin-bottom:30px;
+  white-space:nowrap;
+}
+
+.sidebar.collapsed .logo { opacity:0; }
+
+.nav { list-style:none; }
+
+.nav li {
+  padding:14px;
+  margin-bottom:12px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:.25s;
+  display:flex;
+  gap:12px;
+}
+
+.nav li span { white-space:nowrap; }
+
+.sidebar.collapsed .nav span { opacity:0; }
+
+.nav li:hover {
+  background:rgba(59,130,246,.15);
+  transform:translateX(6px);
+}
+
+.nav li.active {
+  background:rgba(59,130,246,.25);
+  font-weight:600;
+}
+
+/* ===== MAIN ===== */
+.main { flex:1; position:relative; }
+
+iframe, #leafletMap {
+  width:100%;
+  height:100%;
+  border:none;
+  display:none;
+}
+
+/* ===== PH BUTTON ===== */
+.ph-btn {
+  position:absolute;
+  top:20px;
+  right:20px;
+  z-index:999;
+  background:#1f2933;
+  border:1px solid #374151;
+  padding:10px 14px;
+  color:#93c5fd;
+  cursor:pointer;
+  border-radius:6px;
+}
+
+/* ===== INFO PAGES ===== */
+#info, #safety {
+  padding:40px;
+  display:none;
+  height:100%;
+  overflow-y:auto;
+}
+
+.safety-content {
+  max-width:800px;
+  margin:0 auto;
+}
+
+.safety-section {
+  margin-bottom:40px;
+  padding:20px;
+  background:rgba(31,41,51,0.5);
+  border-radius:8px;
+  border-left:4px solid #3b82f6;
+}
+
+.safety-section h2 {
+  color:#93c5fd;
+  margin-bottom:15px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.safety-section h3 {
+  color:#60a5fa;
+  margin:20px 0 10px 0;
+}
+
+.safety-section ul {
+  margin-left:20px;
+  margin-bottom:15px;
+}
+
+.safety-section li {
+  margin-bottom:8px;
+  line-height:1.6;
+}
+
+.tip-box {
+  background:rgba(251,191,36,0.1);
+  border:1px solid rgba(251,191,36,0.3);
+  border-radius:6px;
+  padding:15px;
+  margin:15px 0;
+}
+
+.tip-box strong {
+  color:#fbbf24;
+}
+
+.source {
+  font-size:0.9em;
+  color:#9ca3af;
+  margin-top:30px;
+  padding-top:15px;
+  border-top:1px solid #374151;
+}
+
+/* Responsive info pages */
+@media (max-width: 768px) {
+  #info, #safety {
+    padding:20px;
+  }
+  
+  .safety-section {
+    padding:15px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="toggle" id="toggle">☰</div>
+  <div class="logo">QuakePH</div>
+
+  <ul class="nav">
+    <li class="active" data-tab="hazard">🌎 <span>Global Hazard</span></li>
+    <li data-tab="risk">⚠️ <span>Global Risk</span></li>
+    <li data-tab="recent">📍 <span>Recent Earthquakes</span></li>
+    <li data-tab="safety">🛡️ <span>Earthquake Safety</span></li>
+    <li data-tab="about">ℹ️ <span>About</span></li>
+  </ul>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- OpenQuake -->
+  <iframe id="hazard"
+    src="https://maps.openquake.org/map/global-seismic-hazard-map/"
+    style="display:block;"></iframe>
+
+  <iframe id="risk"
+    src="https://b.maps.openquake.org/map/grm-2023-1/"></iframe>
+
+  <!-- Leaflet -->
+  <div id="leafletMap"></div>
+  <button class="ph-btn" id="phFocus" style="display:none;">
+    🇵🇭 Focus Philippines
+  </button>
+
+  <!-- About Info -->
+  <div id="info">
+    <h1>About QuakePH</h1>
+    <p>
+      Intelligence-style earthquake dashboard combining global hazard
+      models with live USGS earthquake feeds and fault line overlays.
+    </p>
+  </div>
+
+  <!-- Safety Info -->
+  <div id="safety">
+    <div class="safety-content">
+      <h1 style="color:#93c5fd; margin-bottom:30px;">🌍 Earthquake Safety Guide</h1>
+      
+      <div class="safety-section">
+        <h2>🛡️ Before an Earthquake</h2>
+        <h3>Preparation</h3>
+        <ul>
+          <li>Create an emergency plan with your family</li>
+          <li>Identify safe spots in each room (under sturdy furniture, against interior walls)</li>
+          <li>Practice "Drop, Cover, and Hold On" drills</li>
+          <li>Secure heavy furniture, appliances, and hanging objects</li>
+          <li>Know how to turn off gas, water, and electricity</li>
+        </ul>
+        
+        <h3>Emergency Kit</h3>
+        <ul>
+          <li>Water (at least 1 gallon per person per day for 3 days)</li>
+          <li>Non-perishable food (3-day supply)</li>
+          <li>First aid kit and medications</li>
+          <li>Flashlight with extra batteries</li>
+          <li>Portable radio</li>
+          <li>Important documents in waterproof container</li>
+          <li>Whistle to signal for help</li>
+        </ul>
+      </div>
+
+      <div class="safety-section">
+        <h2>🏃‍♂️ During an Earthquake</h2>
+        
+        <div class="tip-box">
+          <strong>DROP, COVER, and HOLD ON!</strong>
+        </div>
+        
+        <h3>If indoors:</h3>
+        <ul>
+          <li>Drop to your hands and knees</li>
+          <li>Cover your head and neck with your arms</li>
+          <li>Hold on to any sturdy shelter until shaking stops</li>
+          <li>Stay away from windows, outside walls, and glass</li>
+          <li>DO NOT run outside during shaking</li>
+        </ul>
+        
+        <h3>If outdoors:</h3>
+        <ul>
+          <li>Move to an open area away from buildings, trees, and power lines</li>
+          <li>Drop to the ground and protect your head</li>
+          <li>Stay low until shaking stops</li>
+        </ul>
+        
+        <h3>If driving:</h3>
+        <ul>
+          <li>Pull over to a clear location, set parking brake</li>
+          <li>Avoid overpasses, bridges, power lines, and signs</li>
+          <li>Stay inside the vehicle until shaking stops</li>
+        </ul>
+      </div>
+
+      <div class="safety-section">
+        <h2>🚨 After an Earthquake</h2>
+        
+        <h3>Immediate Actions:</h3>
+        <ul>
+          <li>Check yourself and others for injuries</li>
+          <li>Expect aftershocks - be prepared to Drop, Cover, and Hold On again</li>
+          <li>Look for and extinguish small fires</li>
+          <li>Listen to battery-powered radio for emergency information</li>
+          <li>Use phone only for life-threatening emergencies</li>
+        </ul>
+        
+        <h3>Home Inspection:</h3>
+        <ul>
+          <li>Check for gas leaks - if you smell gas, shut off main valve and evacuate</li>
+          <li>Look for electrical system damage - shut off power at main breaker if unsafe</li>
+          <li>Inspect water lines for damage</li>
+          <li>Clean up spilled medicines, bleach, or other hazardous materials</li>
+        </ul>
+        
+        <h3>If Trapped:</h3>
+        <ul>
+          <li>Tap on pipes or walls so rescuers can locate you</li>
+          <li>Use a whistle if available</li>
+          <li>Shout only as a last resort to avoid inhaling dust</li>
+        </ul>
+      </div>
+
+      <div class="safety-section">
+        <h2>🇵🇭 Philippine-Specific Information</h2>
+        
+        <h3>Important Numbers:</h3>
+        <ul>
+          <li><strong>PHIVOLCS Hotline:</strong> (02) 8426-1468 to 79</li>
+          <li><strong>NDRRMC:</strong> (02) 8911-1406</li>
+          <li><strong>Emergency:</strong> 911 (nationwide)</li>
+          <li><strong>Red Cross:</strong> 143</li>
+        </ul>
+        
+        <h3>Philippine Earthquake Alerts:</h3>
+        <ul>
+          <li>Intensity Scale (I to X) measures felt effects</li>
+          <li>Magnitude measures energy released at source</li>
+          <li>Tsunami warnings for coastal areas after strong quakes</li>
+          <li>Follow PHIVOLCS on social media for real-time updates</li>
+        </ul>
+      </div>
+
+      <div class="source">
+        <p>Information sourced from: PHIVOLCS, NDRRMC, USGS, and Red Cross guidelines</p>
+        <p><em>Last updated: April 2024</em></p>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+/* ===== UI ===== */
+const sidebar = document.getElementById("sidebar");
+document.getElementById("toggle").onclick =
+  () => sidebar.classList.toggle("collapsed");
+
+const tabs = document.querySelectorAll(".nav li");
+const hazard = document.getElementById("hazard");
+const risk = document.getElementById("risk");
+const mapDiv = document.getElementById("leafletMap");
+const info = document.getElementById("info");
+const safety = document.getElementById("safety");
+const phBtn = document.getElementById("phFocus");
+
+/* ===== LEAFLET MAP ===== */
+const map = L.map("leafletMap").setView([12.5, 121], 5);
+
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  attribution: "&copy; OpenStreetMap"
+}).addTo(map);
+
+/* USGS LIVE FEED (Past Day) */
+const quakes = L.geoJSON(null, {
+  pointToLayer: (f, latlng) => {
+    const m = f.properties.mag;
+    return L.circleMarker(latlng, {
+      radius: m * 2.5,
+      color: "#ef4444",
+      fillOpacity: 0.75
+    });
+  }
+}).addTo(map);
+
+fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson")
+  .then(r => r.json())
+  .then(d => quakes.addData(d));
+
+/* FAULT LINES (replace with PHIVOLCS if available) */
+fetch("https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json")
+  .then(r => r.json())
+  .then(d => L.geoJSON(d, {
+    style:{ color:"#facc15", weight:1 }
+  }).addTo(map));
+
+/* PH Focus */
+phBtn.onclick = () => map.setView([12.8797,121.7740],6);
+
+/* ===== NAVIGATION ===== */
+tabs.forEach(t => t.onclick = () => {
+  tabs.forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+
+  hazard.style.display =
+  risk.style.display =
+  mapDiv.style.display =
+  info.style.display =
+  safety.style.display = "none";
+  phBtn.style.display = "none";
+
+  if (t.dataset.tab === "hazard") hazard.style.display = "block";
+  if (t.dataset.tab === "risk") risk.style.display = "block";
+  if (t.dataset.tab === "recent") {
+    mapDiv.style.display = "block";
+    phBtn.style.display = "block";
+    map.invalidateSize();
+  }
+  if (t.dataset.tab === "about") info.style.display = "block";
+  if (t.dataset.tab === "safety") safety.style.display = "block";
+});
+</script>
+</body>
+</html>
