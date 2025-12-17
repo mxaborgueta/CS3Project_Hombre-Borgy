@@ -21,6 +21,8 @@ html, body {
   padding:16px;
   transition:width .3s;
   position:relative;
+  display:flex;
+  flex-direction:column;
 }
 
 .sidebar.collapsed { width:70px; }
@@ -28,7 +30,7 @@ html, body {
 .toggle {
   position:absolute;
   top:12px;
-  right:12px;
+  right:-15px;
   width:36px;
   height:36px;
   border-radius:50%;
@@ -51,7 +53,10 @@ html, body {
 
 .sidebar.collapsed .logo { opacity:0; }
 
-.nav { list-style:none; }
+.nav { 
+  list-style:none;
+  flex:1;
+}
 
 .nav li {
   padding:14px;
@@ -75,6 +80,46 @@ html, body {
 .nav li.active {
   background:rgba(59,130,246,.25);
   font-weight:600;
+}
+
+/* ===== BOTTOM LINKS ===== */
+.bottom-links {
+  margin-top:auto;
+  padding-top:20px;
+  border-top:1px solid #374151;
+}
+
+.bottom-links a {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 14px;
+  margin-bottom:8px;
+  border-radius:6px;
+  color:#e5e7eb;
+  text-decoration:none;
+  transition:all 0.25s;
+  white-space:nowrap;
+}
+
+.bottom-links a:hover {
+  background:rgba(59,130,246,.15);
+  transform:translateX(3px);
+  color:#93c5fd;
+}
+
+.bottom-links a span {
+  flex:1;
+}
+
+.sidebar.collapsed .bottom-links a span {
+  opacity:0;
+  display:none;
+}
+
+.sidebar.collapsed .bottom-links a {
+  justify-content:center;
+  padding:12px;
 }
 
 /* ===== MAIN ===== */
