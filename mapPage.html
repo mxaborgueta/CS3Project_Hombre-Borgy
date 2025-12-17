@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>QuakePH</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<link rel="stylesheet" href="assets/stylesheet-mapPage.css"/>
+
+</head>
+
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="toggle" id="toggle">☰</div>
+  <div class="logo">QuakePH</div>
+
+  <ul class="nav">
+    <li class="active" data-tab="hazard">🌎 <span>Global Hazard</span></li>
+    <li data-tab="risk">⚠️ <span>Global Risk</span></li>
+    <li data-tab="recent">📍 <span>Recent Earthquakes</span></li>
+  </ul>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- OpenQuake -->
+  <iframe id="hazard"
+    src="https://maps.openquake.org/map/global-seismic-hazard-map/"
+    style="display:block;"></iframe>
+
+  <iframe id="risk"
+    src="https://b.maps.openquake.org/map/grm-2023-1/"></iframe>
+
+  <!-- Leaflet -->
+  <div id="leafletMap"></div>
+
+</main>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+/* ===== UI ===== */
+const sidebar = document.getElementById("sidebar");
+document.getElementById("toggle").onclick =
+  () => sidebar.classList.toggle("collapsed");
+
+const tabs = document.querySelectorAll(".nav li");
+const hazard = document.getElementById("hazard");
+const risk = document.getElementById("risk");
+const mapDiv = document.getElementById("leafletMap");
+
+/* ===== LEAFLET MAP ===== */
+const map = L.map("leafletMap").setView([12.5, 121], 5);
+
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  attribution: "&copy; OpenStreetMap"
+}).addTo(map);
+
+/* FAULT LINES (replace with PHIVOLCS if available) */
+fetch("https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json")
+  .then(r => r.json())
+  .then(d => L.geoJSON(d, {
+    style:{ color:"#facc15", weight:1 }
+  }).addTo(map));
+
+/* ===== RECENT EARTHQUAKES INTERFACE ===== */
+let quakeLayer = L.layerGroup().addTo(map);
+
+// Create earthquake list control
+const quakeListControl = L.control({ position: "topright" });
+
+quakeListControl.onAdd = function () {
+  const div = L.DomUtil.create("div", "quake-list");
+  div.innerHTML = "<b>Recent Earthquakes (24h)</b><hr>";
+  return div;
+};
+
+// Create legend control
+const legend = L.control({ position: "bottomleft" });
+
+legend.onAdd = function () {
+  const div = L.DomUtil.create("div", "legend");
+  div.innerHTML = `
+    <b>Magnitude</b><br>
+    <span style="color:#00ff00">●</span> &lt; 2<br>
+    <span style="color:#ffff00">●</span> 2 – 3.9<br>
+    <span style="color:#ff8000">●</span> 4 – 5.9<br>
+    <span style="color:#ff0000">●</span> ≥ 6
+  `;
+  return div;
+};
+
+// Function to load earthquake data
+function loadEarthquakeData() {
+  quakeLayer.clearLayers();
+  
+  fetch("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson")
+    .then(res => res.json())
+    .then(data => {
+      const quakeListDiv = document.querySelector(".quake-list");
+      if (quakeListDiv) {
+        quakeListDiv.innerHTML = "<b>Recent Earthquakes (24h)</b><hr><ul style='list-style:none;padding:0;margin:0'></ul>";
+        const list = quakeListDiv.querySelector("ul");
+        
+        L.geoJSON(data, {
+          pointToLayer: (feature, latlng) => {
+            const mag = feature.properties.mag || 0;
+            const time = new Date(feature.properties.time).toLocaleString();
+            const place = feature.properties.place;
+
+            const color =
+              mag < 2 ? "#00ff00" :
+              mag < 4 ? "#ffff00" :
+              mag < 6 ? "#ff8000" :
+                        "#ff0000";
+
+            const marker = L.circleMarker(latlng, {
+              radius: mag * 3,
+              fillColor: color,
+              color: "#000",
+              weight: 1,
+              fillOpacity: 0.7
+            }).bindPopup(`
+              <b>${place}</b><br>
+              Magnitude: ${mag}<br>
+              Time: ${time}
+            `);
+
+            // Add to sidebar list
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <span style="color:${color};font-weight:bold">●</span>
+              M${mag} — ${place.split(",").pop()}
+            `;
+            li.onclick = () => {
+              map.setView(latlng, 7);
+              marker.openPopup();
+            };
+
+            if (list) {
+              list.appendChild(li);
+            }
+
+            return marker;
+          }
+        }).addTo(quakeLayer);
+      }
+    })
+    .catch(error => {
+      console.error("Error loading earthquake data:", error);
+    });
+}
+
+/* ===== NAVIGATION ===== */
+tabs.forEach(t => t.onclick = () => {
+  tabs.forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+
+  hazard.style.display =
+  risk.style.display =
+  mapDiv.style.display = "none";
+
+  if (t.dataset.tab === "hazard") hazard.style.display = "block";
+  if (t.dataset.tab === "risk") risk.style.display = "block";
+  if (t.dataset.tab === "recent") {
+    mapDiv.style.display = "block";
+    
+    // Add controls only once when showing recent earthquakes
+    if (!document.querySelector(".quake-list")) {
+      quakeListControl.addTo(map);
+      legend.addTo(map);
+    }
+    
+    // Load earthquake data and resize map
+    loadEarthquakeData();
+    map.invalidateSize();
+    
+    // Auto-refresh data every 5 minutes
+    setInterval(loadEarthquakeData, 300000);
+  }
+});
+
+// Initial load of the active tab
+document.querySelector('.nav li.active').click();
+</script>
+</body>
+</html>
