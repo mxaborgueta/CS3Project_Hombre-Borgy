@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>QuakePH | References</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<link rel="stylesheet" href="assets/stylesheet-earthquakeSafety.css"/>
+
+</head>
+
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="toggle" id="toggle">☰</div>
+  <div class="logo">QuakePH</div>
+
+  <ul class="nav">
+    <li class="active">
+      <span>References</span>
+    </li>
+  </ul>
+
+  <!-- Bottom Links -->
+  <div class="bottom-links">
+    <a href="index.html">
+      <span>Portal Home</span>
+    </a>
+    <a href="mapPage.html">
+      <span>Seismic Map</span>
+    </a>
+    <a href="earthquakeSafetyPage.html">
+      <span>Earthquake Safety</span>
+    </a>
+    <a href="aboutUsPage.html">
+      <span>About Us</span>
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+  <div class="safety-header">
+    <h1>References</h1>
+    <p>Where we get our data.</p>
+  </div>
+
+  <section class="references">
+    <h2 class="section-title">References used:</h2>
+
+    <p> Earthquakes. (n.d.). USGS. https://www.usgs.gov/programs/earthquake-hazards/earthquakes
+    GEM Foundation. (n.d.). OpenQuake Map Viewer - Global Seismic Hazard Map. https://maps.openquake.org/map/global-seismic-hazard-map/
+    OpenAI. (2025). ChatGPT (December 16 version) [Large language model]. https://chat.openai.com/. 
+    Philippines, G. (n.d.). HazardHunterPH - Hazard assessment at your fingertips. https://hazardhunter.georisk.gov.ph/
+    </p>
+  </section>
+
+<script>
+/* ===== UI ===== */
+const sidebar = document.getElementById("sidebar");
+document.getElementById("toggle").onclick =
+  () => sidebar.classList.toggle("collapsed");
+
+// Highlight current page in bottom links
+document.addEventListener('DOMContentLoaded', function() {
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  const links = document.querySelectorAll('.bottom-links a');
+  
+  links.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href === currentPage || (currentPage === '' && href === 'index.html')) {
+      link.style.background = 'rgba(59,130,246,0.25)';
+      link.style.color = '#93c5fd';
+    }
+  });
+});
+</script>
+</body>

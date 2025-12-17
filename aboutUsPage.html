@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>QuakePH | About Us</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<link rel="stylesheet" href="assets/stylesheet-earthquakeSafety.css"/>
+
+</head>
+
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="toggle" id="toggle">☰</div>
+  <div class="logo">QuakePH</div>
+
+  <ul class="nav">
+    <li class="active">
+      <span>About Us</span>
+    </li>
+  </ul>
+
+  <!-- Bottom Links -->
+  <div class="bottom-links">
+    <a href="index.html">
+      <span>Portal Home</span>
+    </a>
+    <a href="mapPage.html">
+      <span>Seismic Map</span>
+    </a>
+    <a href="earthquakeSafetyPage.html">
+      <span>Earthquake Safety</span>
+    </a>
+    <a href="referencePage.html">
+      <span>References</span>
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+  <div class="safety-header">
+    <h1>About Us</h1>
+    <p>What this website is about, why we do this and how important it is to the Philippines and the World</p>
+  </div>
+
+  <section class="whatisthiswebabout">
+    <h2 class="section-title">What is this website about?</h2>
+
+      <p>Our website is about monitoring seismic activities and giving seismic risk maps through using friendly interface and government data from the USGS and scientific data from OpenQuake. This website also aims to provide users with knowledge on earthquakes and their effects by creating simulators which shows how brutal Earthquakes are in population centers by using data from our Hazard Risk map. We also aim to give information on Earthquake preparedness for people in areas with high levels of seismic activity. </p>
+  </section>
+
+  <!-- DURING EARTHQUAKE SECTION -->
+  <section class="whywedothis">
+    <h2 class="section-title2">Why we made this website</h2>
+    <p>The recent earthquakes in the Philippines such as the earthquakes in Cebu and Davao and the possibility of the "Big One" in the West Valley Fault propelled us to make this website. This website was originally meant for Filipinos but as we saw that other nations and regions have the same issue of high levels of seismic activity, we aimed to give accurate and concise data and maps about such activities and how to be safe from them. This website has the people of those affected by Earthquakes at our very heart so that we may not let others suffer the same fate.</p>
+  </section>
+
+<script>
+/* ===== UI ===== */
+const sidebar = document.getElementById("sidebar");
+document.getElementById("toggle").onclick =
+  () => sidebar.classList.toggle("collapsed");
+
+// Highlight current page in bottom links
+document.addEventListener('DOMContentLoaded', function() {
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  const links = document.querySelectorAll('.bottom-links a');
+  
+  links.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href === currentPage || (currentPage === '' && href === 'index.html')) {
+      link.style.background = 'rgba(59,130,246,0.25)';
+      link.style.color = '#93c5fd';
+    }
+  });
+});
+</script>
+</body>
