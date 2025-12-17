@@ -143,3 +143,24 @@
     footer a:hover {
       color: var(--accent);
     }
+
+    .link-card img.safety-icon {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      margin-bottom: 15px;
+      border-radius: 8px; /* Optional: round corners */
+    }
+
+    /* If you want to maintain consistency with other icons */
+    .link-card i {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      color: #3b82f6; /* Blue color similar to your theme */
+    }
+
+    /* Specific styling for the safety image */
+    .link-card .safety-icon {
+      filter: brightness(0) saturate(100%) invert(46%) sepia(85%) saturate(1218%) hue-rotate(202deg) brightness(95%) contrast(101%);
+      /* This filter makes images blue to match the theme */
+    }
